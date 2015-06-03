@@ -22,11 +22,105 @@ function initMap()
         popupAnchor: [0, -28]
     });
 */
+    L.mapbox.accessToken = 'pk.eyJ1Ijoic2FuZGVlcGt1IiwiYSI6IkFSY3ZlWk0ifQ.5oM1TFkbzFtB74EpnEOh-w';
+    var map = L.mapbox.map('map')
+        .setView([59.9155, 10.7419], 10)
+        .addLayer(L.mapbox.tileLayer('mapbox.streets'));
 
+    var geolocationLayer = L.mapbox.featureLayer().addTo(map);
+
+    map.on('locationfound', function(e) {
+        map.fitBounds(e.bounds);
+
+        geolocationLayer.setGeoJSON({
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [e.latlng.lng, e.latlng.lat]
+            },
+            properties: {
+                'title': 'Your location',
+                'marker-color': '#ff8888',
+                'marker-symbol': 'star'
+            }
+        });
+
+        // And hide the geolocation button
+        //geolocate.parentNode.removeChild(geolocate);
+    });
+
+// If the user chooses not to allow their location
+// to be shared, display an error message.
+    map.on('locationerror', function() {
+       console.log("Position could not be found");
+    });
+
+    var clusterGroup;
+    L.mapbox.featureLayer()
+        .loadURL('/getout/getout/data/getout.js')
+        .on('ready', function(e) {
+           /* layers = e.target;
+            showStations();
+            */
+            clusterGroup = new L.MarkerClusterGroup({
+                iconCreateFunction: function(cluster) {
+                    return L.mapbox.marker.icon({
+                        'marker-symbol': cluster.getChildCount(),
+                        'marker-color': '#422'
+                    });
+                }
+            });
+            e.target.eachLayer(function(layer) {
+                var popupContent="";
+               if(layer.feature){
+                    for (key in layer.feature.properties) {
+                        if (layer.feature.properties.hasOwnProperty(key)) {
+                            if(layer.feature.properties[key].toString().indexOf("http:")>=0){
+                                popupContent += key + " <b><a href='" + layer.feature.properties[key] + "' target='_blank'>" + layer.feature.properties[key] + "</a></b><br>";
+                            }else {
+                                popupContent += key + " <b>" + layer.feature.properties[key] + "</b><br>";
+                            }
+                        }
+                    }
+                    layer.bindPopup(popupContent);
+
+               }
+                clusterGroup.addLayer(layer);
+
+            });
+
+            map.addLayer(clusterGroup);
+        });
+
+    if (!navigator.geolocation) {
+       console.log("Geolocation is not available");
+    } else {
+        map.locate();
+    }
+  /*
+    L.mapbox.featureLayer('sandeepku.m4g0dckf').on('ready', function(e) {
+        var clusterGroup = new L.MarkerClusterGroup({
+            iconCreateFunction: function(cluster) {
+                return L.mapbox.marker.icon({
+                    'marker-symbol': cluster.getChildCount(),
+                    'marker-color': '#422'
+                });
+            }
+        });
+        e.target.eachLayer(function(layer) {
+            clusterGroup.addLayer(layer);
+        });
+        map.addLayer(clusterGroup);
+    });
+*/
+
+  /*
     map = L.map('map').setView([59.9155, 10.7419], 10);
     layer = L.esri.basemapLayer('Streets',{
         detectRetina: true
     }).addTo(map);
+
+    map.addControl( new L.Control.Gps({marker: new L.Marker([0,0])}) );//inizialize control
 
     var basemaps = document.getElementById('basemaps');
 
@@ -35,11 +129,16 @@ function initMap()
     });
 
     function onEachFeature(feature, layer) {
-        var popupContent = "<p>I started out as a GeoJSON " +
-            feature.geometry.type + ", but now I'm a Leaflet vector!</p>";
-
-        if (feature.properties && feature.properties.popupContent) {
-            popupContent += feature.properties.popupContent;
+       // console.log(feature.properties);
+        var popupContent="";
+        for (key in feature.properties) {
+            if (feature.properties.hasOwnProperty(key)) {
+                if(feature.properties[key].toString().indexOf("http:")>=0){
+                    popupContent += key + " <b><a href='" + feature.properties[key] + "' target='_blank'>" + feature.properties[key] + "</a></b><br>";
+                }else {
+                    popupContent += key + " <b>" + feature.properties[key] + "</b><br>";
+                }
+            }
         }
 
         layer.bindPopup(popupContent);
@@ -53,6 +152,8 @@ function initMap()
 
         onEachFeature: onEachFeature
     }).addTo(map);
+
+*/
 }
 function setBasemap(basemap) {
     if (layer) {
